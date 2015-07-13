@@ -35,5 +35,23 @@
             android:text="Calibrate"
             android:id="@+id/calibration_button"
             android:layout_gravity="center_horizontal" />
+        <LinearLayout
+            android:layout_height="wrap_content"
+            android:layout_width="fill_parent"
+            android:orientation="horizontal"
+            >
+            <view
+                class="ca.uwaterloo.Lab4_206_03.Compass"
+                android:id="@+id/compass1"
+                android:layout_width="400px"
+                android:layout_height="400px"
+                />
+            <view
+                class="ca.uwaterloo.Lab4_206_03.Compass"
+                android:id="@+id/compass2"
+                android:layout_width="400px"
+                android:layout_height="400px"
+                />
+        </LinearLayout>
     </LinearLayout>
 </ScrollView>

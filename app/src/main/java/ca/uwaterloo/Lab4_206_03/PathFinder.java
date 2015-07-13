@@ -16,6 +16,9 @@ public class PathFinder {
     private String debugTag = "CLOCKS";
     public NavigationalMap map;
     public MapView mv;
+    public List<PointF> directionPoints = new ArrayList<PointF>();
+    public boolean angleToTurnCalculated = false;
+    private StepCounter stepCounter;
     TextView testView;
 
     public PathFinder(NavigationalMap map1, MapView mapView1, TextView view1) {
@@ -40,21 +43,21 @@ public class PathFinder {
         while(!map.calculateIntersections(userPoint, mv.getDestinationPoint()).isEmpty()) {
             num_tries++;
             if(num_tries >= 100) {
-                Log.d(debugTag, "======================== FAILED ===================");
+                Log.d(debugTag, "======================== FAILURE ===================");
                 Log.d(debugTag, points.toString());
                 mv.setUserPath(points);
-                return points.toString();
+                return "Couldn't find a path - stuck in an infinite loop.";
             }
             // In order to make a move:
             // Check each direction, in order of priority
             // 1. See if we can go in that direction
             // 2. Check if we haven't previously been there
-            // If both these conditions pass, the move accordingly
+            // If both these conditions pass, move accordingly
             for(int i = 0; i < priorities.length; i++) {
                 if(priorities[i] == 0) {
                     Log.d(debugTag, "Got stuck");
                     mv.setUserPath(points);
-                    return "Oh no we're stuck! :( Path not determined:";
+                    return "Couldn't find a path - Got stuck :(";
                 } else if(priorities[i] == 1) {
                     Log.d(debugTag, "Trying to go north");
                     if(canGoNorth(userPoint)) {
@@ -116,8 +119,9 @@ public class PathFinder {
         }
         points.add(new PointF(mv.getDestinationPoint().x, mv.getDestinationPoint().y));
         Log.d(debugTag, "======================== SUCCESS ===================");
+        directionPoints = points;
         mv.setUserPath(points);
-        return "Path determined:" + points.toString();
+        return "Path determined! :D";
     }
 
     // Returns true if the given point has already been visited

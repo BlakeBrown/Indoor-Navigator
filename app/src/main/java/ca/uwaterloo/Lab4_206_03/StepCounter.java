@@ -1,5 +1,6 @@
 package ca.uwaterloo.Lab4_206_03;
 
+import android.graphics.PointF;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -9,16 +10,20 @@ import android.widget.TextView;
 
 import org.w3c.dom.Text;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import ca.uwaterloo.mapper.MapView;
 import ca.uwaterloo.sensortoy.LineGraphView;
 
 public class StepCounter implements SensorEventListener {
 
     // Initialize variables
-    TextView stepsView, yStepsView, xStepsView, yDisplacementView, xDisplacementView, orientationView;
+    TextView stepsView, yStepsView, xStepsView, yDisplacementView, xDisplacementView, orientationView, directionsTextView;
     float currentMagnitude, prevMagnitude, currentDerivative, prevDerivative, magnitudeOfStep;
     Long prevTimestamp, currentTimestamp, lastStepTimestamp;
     int steps, ySteps, xSteps = 0;
-    double yDisplacement = 0, xDisplacement = 0, stepMagnitude = 0.5, stepMagnitudeY = 0, stepMagnitudeX = 0, calibratedOrientationRadians = 0;
+    double yDisplacement = 0, xDisplacement = 0, stepMagnitude = 0.5, stepMagnitudeY = 0, stepMagnitudeX = 0, calibratedOrientationRadians = 0, angleToTurn=0;
     float[] values = new float[3];
     float[] prev20Magnitudes = new float[20];
     float largestMagnitudeInPast20Readings = 0;
@@ -30,9 +35,17 @@ public class StepCounter implements SensorEventListener {
     Button reset_button;
     Button calibration_button;
     String direction = "North";
+    public boolean findDirections = false;
+    PathFinder pathFinder;
+    MapView mv;
+    Compass orientationCompass, destinationCompass;
 
     // Constructor for the class, takes in a graph (for graphing steps), buttons (for reset/calibration) and TextViews (for displaying information)
-    public StepCounter(LineGraphView graph, Button button1, Button button2, TextView view1, TextView view2, TextView view3, TextView view4, TextView view5, TextView view6) {
+    public StepCounter(PathFinder pathFinder1, MapView mapView1, Compass compass1, Compass compass2, LineGraphView graph, Button button1, Button button2, TextView view1, TextView view2, TextView view3, TextView view4, TextView view5, TextView view6, TextView view7) {
+        pathFinder = pathFinder1;
+        mv = mapView1;
+        orientationCompass = compass1;
+        destinationCompass = compass2;
         accelerometerGraph = graph;
         reset_button = button1;
         calibration_button = button2;
@@ -42,6 +55,7 @@ public class StepCounter implements SensorEventListener {
         yDisplacementView = view4;
         xDisplacementView = view5;
         orientationView = view6;
+        directionsTextView = view7;
     }
 
     // Find the derivative given a point (y = magnitude, x = timestamp)
@@ -138,6 +152,9 @@ public class StepCounter implements SensorEventListener {
                         }
                         yDisplacement+= stepMagnitudeY;
                         xDisplacement+= stepMagnitudeX;
+                        PointF newPoint = new PointF(mv.getUserPoint().x, mv.getUserPoint().y);
+                        mv.setUserPoint(newPoint.x+(float)stepMagnitudeX,newPoint.y-(float)stepMagnitudeY);
+                        //mv.getUserPoint().x+=stepMagnitudeX;
                         lastStepTimestamp = currentTimestamp;
                         magnitudeOfStep = currentMagnitude;
                     }
@@ -196,6 +213,36 @@ public class StepCounter implements SensorEventListener {
             });
             // Calculate a calibrated orientation by using modulus
             calibratedOrientation = (((currentOrientation-degreesFromNorth)%360) + 360)%360;
+            orientationCompass.updateDirection(calibratedOrientation);
+            // Choose directions to go
+            if(!pathFinder.directionPoints.isEmpty()) {
+                directionsTextView.setText("Size is :" + pathFinder.directionPoints.size());
+                if(pathFinder.directionPoints.size() == 1) {
+                    directionsTextView.setText("You've arrived!");
+                } else {
+                    if(pathFinder.directionPoints.size() == 2) {
+                        if(!pathFinder.angleToTurnCalculated) {
+                            PointF point1 = pathFinder.directionPoints.get(0);
+                            PointF point2 = pathFinder.directionPoints.get(1);
+                            float deltaX = point2.x - point1.x;
+                            float deltaY = point1.y - point2.y;
+                            angleToTurn = Math.atan(deltaX/deltaY)*(180/Math.PI);
+                            if(deltaY > 0) {
+                                if(angleToTurn < 0) {
+                                    angleToTurn+=360;
+                                }
+                            } else {
+                                angleToTurn += 180;
+                            }
+                            pathFinder.angleToTurnCalculated = true;
+                            //directionsTextView.setText("Tan of: + " + deltaX + " / " + deltaY + " is " + angleToTurn + " degrees");
+                        } else {
+                            destinationCompass.updateDirection((float)angleToTurn);
+                            directionsTextView.setText("Turn: " + (angleToTurn) + " degrees");
+                        }
+                    }
+                }
+            }
             // Determine the general direction user is facing
             if(calibratedOrientation < 45 || calibratedOrientation > 315) {
                 direction = "North";
