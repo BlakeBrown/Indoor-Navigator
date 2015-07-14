@@ -4,6 +4,7 @@ import android.graphics.PointF;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -34,7 +35,9 @@ public class StepCounter implements SensorEventListener {
     boolean filled = false;
     LineGraphView accelerometerGraph;
     Button reset_button, calibration_button, start_button;
-    String direction = "North";;
+    String direction = "North";
+    // debugTag allows us to only view logs in the debugger associated with the tag
+    private String debugTag = "CLOCKS";
     PathFinder pathFinder;
     MapView mv;
     Compass orientationCompass, destinationCompass;
@@ -240,45 +243,86 @@ public class StepCounter implements SensorEventListener {
             orientationCompass.updateDirection(calibratedOrientation);
             // Choose directions to go
             if(!pathFinder.directionPoints.isEmpty()) {
-                directionsTextView.setText("Size is :" + pathFinder.directionPoints.size());
-                if(pathFinder.directionPoints.size() == 1) {
-                    directionsTextView.setText("You've arrived!");
+                //directionsTextView.setText("Size is :" + pathFinder.directionPoints.size());
+                if(pathFinder.directionPoints.size() == 2) {
+                    if(!pathFinder.angleToTurnCalculated) {
+                        PointF point1 = new PointF(mv.getUserPoint().x, mv.getUserPoint().y);
+                        PointF point2 = pathFinder.directionPoints.get(1);
+                        float deltaX = point2.x - point1.x;
+                        float deltaY = point1.y - point2.y;
+                        angleToTurn = Math.atan(deltaX/deltaY)*(180/Math.PI);
+                        if(deltaY > 0) {
+                            if(angleToTurn < 0) {
+                                angleToTurn+=360;
+                            }
+                        } else {
+                            angleToTurn += 180;
+                        }
+                        pathFinder.angleToTurnCalculated = true;
+                        //directionsTextView.setText("Tan of: + " + deltaX + " / " + deltaY + " is " + angleToTurn + " degrees");
+                    } else {
+                        destinationCompass.updateDirection((float) angleToTurn);
+                        PointF point1 = new PointF(mv.getUserPoint().x, mv.getUserPoint().y);
+                        PointF point2 = pathFinder.directionPoints.get(1);
+                        float deltaX = point2.x - point1.x;
+                        float deltaY = point1.y - point2.y;
+                        float hypotenuse = (float) Math.sqrt(deltaX*deltaX + deltaY*deltaY);
+                        if (Math.abs(deltaX) <= 0.5 && Math.abs(deltaY) <= 0.5) {
+                            directionsTextView.setText("Directions: Congratz, you've arrived! :)");
+                            pathFinder.givingDirections = false;
+                            pathFinder.directionPoints = new ArrayList<PointF>();
+                            start_button.setText("Go!");
+                        } else {
+                            if (Math.abs(angleToTurn - calibratedOrientation) <= 5) {
+                                directionsTextView.setText("Directions: Walk forward.");
+                            } else {
+                                directionsTextView.setText("Directions: Turn to the direction indicated by the compass");
+                            }
+                        }
+                    }
                 } else {
-                    if(pathFinder.directionPoints.size() == 2) {
-                        if(!pathFinder.angleToTurnCalculated) {
-                            PointF point1 = pathFinder.directionPoints.get(0);
-                            PointF point2 = pathFinder.directionPoints.get(1);
-                            float deltaX = point2.x - point1.x;
-                            float deltaY = point1.y - point2.y;
-                            angleToTurn = Math.atan(deltaX/deltaY)*(180/Math.PI);
-                            if(deltaY > 0) {
-                                if(angleToTurn < 0) {
-                                    angleToTurn+=360;
+                    // Give directions to the next point, remove the next point after we reach it so we can grab the point after that
+                    PointF currentPoint = new PointF(mv.getUserPoint().x, mv.getUserPoint().y);
+                    PointF point1 = pathFinder.directionPoints.get(0);
+                    PointF point2 = pathFinder.directionPoints.get(1);
+                    // Use deltaX between current point and point 2 to determine if we have reached point 2 yet
+                    float deltaXCurrent = point2.x - currentPoint.x;
+                    float deltaYCurrent = currentPoint.y - point2.y;
+                    float hypotenuse = (float) Math.sqrt(deltaXCurrent*deltaXCurrent + deltaYCurrent*deltaYCurrent);
+                    if(hypotenuse <= 2) {
+                        // directionsTextView.setText(Float.toString(deltaXCurrent));
+                        if(Math.abs(deltaXCurrent) <= 0.8 && Math.abs(deltaYCurrent) <= 0.8) {
+                            pathFinder.directionPoints.remove(0);
+                        } else {
+                            // Use deltaX between point1 and point2 to find next directions
+                            float deltaXNext = point2.x - point1.x;
+                            float deltaYNext = point1.y - point2.y;
+                            if(deltaXNext!=0) {
+                                if(deltaXNext > 0) {
+                                    destinationCompass.updateDirection(90);
+                                    angleToTurn = 90;
+                                } else {
+                                    destinationCompass.updateDirection(270);
+                                    angleToTurn = 270;
                                 }
                             } else {
-                                angleToTurn += 180;
-                            }
-                            pathFinder.angleToTurnCalculated = true;
-                            //directionsTextView.setText("Tan of: + " + deltaX + " / " + deltaY + " is " + angleToTurn + " degrees");
-                        } else {
-                            destinationCompass.updateDirection((float) angleToTurn);
-                            PointF point1 = new PointF(mv.getUserPoint().x, mv.getUserPoint().y);
-                            PointF point2 = pathFinder.directionPoints.get(1);
-                            float deltaX = point2.x - point1.x;
-                            float deltaY = point1.y - point2.y;
-                            if(Math.abs(deltaX) <= 0.5 && Math.abs(deltaY) <= 0.5) {
-                                directionsTextView.setText("Directions: Congratz, you've arrived! :)");
-                                pathFinder.givingDirections = false;
-                                pathFinder.directionPoints = new ArrayList<PointF>();
-                                start_button.setText("Go!");
-                            } else {
-                                if(Math.abs(angleToTurn-calibratedOrientation) <= 5) {
-                                    directionsTextView.setText("Directions: Walk forward.");
+                                if(deltaYNext > 0) {
+                                    destinationCompass.updateDirection(0);
+                                    angleToTurn = 0;
                                 } else {
-                                    directionsTextView.setText("Directions: Turn to the direction indicated by the compass");
+                                    destinationCompass.updateDirection(180);
+                                    angleToTurn = 180;
                                 }
                             }
                         }
+                        // Set directions
+                        if(Math.abs(angleToTurn-calibratedOrientation) <= 5) {
+                            directionsTextView.setText("Directions: Walk forward.");
+                        } else {
+                            directionsTextView.setText("Directions: Turn to the direction indicated by the compass");
+                        }
+                    } else {
+                        directionsTextView.setText("Directions: Oops! Looks like you went off track, press Stop and then Go to recalculate directions.");
                     }
                 }
             }
