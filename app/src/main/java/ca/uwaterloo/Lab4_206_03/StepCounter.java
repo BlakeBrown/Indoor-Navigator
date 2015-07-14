@@ -6,6 +6,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import org.w3c.dom.Text;
@@ -32,16 +33,16 @@ public class StepCounter implements SensorEventListener {
     int filledCount = 0;
     boolean filled = false;
     LineGraphView accelerometerGraph;
-    Button reset_button;
-    Button calibration_button;
+    Button reset_button, calibration_button, start_button;
     String direction = "North";
     public boolean findDirections = false;
     PathFinder pathFinder;
     MapView mv;
     Compass orientationCompass, destinationCompass;
+    EditText stepMagnitudeInput;
 
     // Constructor for the class, takes in a graph (for graphing steps), buttons (for reset/calibration) and TextViews (for displaying information)
-    public StepCounter(PathFinder pathFinder1, MapView mapView1, Compass compass1, Compass compass2, LineGraphView graph, Button button1, Button button2, TextView view1, TextView view2, TextView view3, TextView view4, TextView view5, TextView view6, TextView view7) {
+    public StepCounter(PathFinder pathFinder1, MapView mapView1, Compass compass1, Compass compass2, LineGraphView graph, Button button1, Button button2, Button button3, TextView view1, TextView view2, TextView view3, TextView view4, TextView view5, TextView view6, TextView view7, EditText text1) {
         pathFinder = pathFinder1;
         mv = mapView1;
         orientationCompass = compass1;
@@ -49,6 +50,7 @@ public class StepCounter implements SensorEventListener {
         accelerometerGraph = graph;
         reset_button = button1;
         calibration_button = button2;
+        start_button = button3;
         stepsView = view1;
         yStepsView = view2;
         xStepsView = view3;
@@ -56,6 +58,7 @@ public class StepCounter implements SensorEventListener {
         xDisplacementView = view5;
         orientationView = view6;
         directionsTextView = view7;
+        stepMagnitudeInput = text1;
     }
 
     // Find the derivative given a point (y = magnitude, x = timestamp)
@@ -182,6 +185,12 @@ public class StepCounter implements SensorEventListener {
                     xSteps = 0;
                     yDisplacement = 0;
                     xDisplacement = 0;
+                }
+            });
+            start_button.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View vw) {
+                    stepMagnitude = Double.parseDouble(stepMagnitudeInput.getText().toString());
                 }
             });
 

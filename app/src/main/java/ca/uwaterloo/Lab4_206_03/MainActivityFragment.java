@@ -14,6 +14,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -57,6 +58,8 @@ public class MainActivityFragment extends Fragment {
         graph.setVisibility(View.VISIBLE);
         Button reset_button = (Button) rootView.findViewById(R.id.reset_button);
         Button calibration_button = (Button) rootView.findViewById(R.id.calibration_button);
+        Button start_button = (Button) rootView.findViewById(R.id.start_button);
+        EditText stepMagnitudeInput = (EditText) rootView.findViewById(R.id.step_magnitude);
 
         // Initialize the sensor manager for our sensors
         sensorManager = (SensorManager) rootView.getContext().getSystemService(rootView.getContext().SENSOR_SERVICE);
@@ -83,7 +86,7 @@ public class MainActivityFragment extends Fragment {
         compass1.compassText = "Compass";
         compass2 = (Compass) rootView.findViewById(R.id.compass2);
         compass2.compassText = "Go this way";
-        stepCounterEventListener = new StepCounter(pathFinder, mv, compass1, compass2, graph, reset_button, calibration_button, stepsTextView, yStepsTextView, xStepsTextView, yDisplacementTextView, xDisplacementTextView, orientationTextView, directionsTextView);
+        stepCounterEventListener = new StepCounter(pathFinder, mv, compass1, compass2, graph, reset_button, calibration_button, start_button, stepsTextView, yStepsTextView, xStepsTextView, yDisplacementTextView, xDisplacementTextView, orientationTextView, directionsTextView, stepMagnitudeInput);
         // Register two sensors (linear acceleration and orientation) for the stepCounterEventListener
         //sensorManager.registerListener(stepCounterEventListener, sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION), SensorManager.SENSOR_DELAY_FASTEST);
         // sensorManager.registerListener(stepCounterEventListener, sensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION), SensorManager.SENSOR_DELAY_FASTEST);
