@@ -140,37 +140,28 @@ public class MainActivityFragment extends Fragment {
             }
         });
 
-        Button path_finder_button = (Button) rootView.findViewById(R.id.path_finder_button);
-        // When the path finder button is clicked, show the route between the origin and destination point on map
-        path_finder_button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View vw) {
-                pathFinder.directionPoints = new ArrayList<PointF>();
-                pathFinder.angleToTurnCalculated = false;
-                testView1.setText(pathFinder.calculateShortestPath(new PointF(mv.getUserPoint().x, mv.getUserPoint().y)));
-            }
-        });
-
         final TextView coordinates = new TextView(rootView.getContext());
         mv.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                    // Set either the users point or the destination, depending on what was changed last
-                    if (mv.setDestination == false) {
-                        mv.setDestination = true;
-                        mv.setUserPoint(event.getX() / mv.getXScale(), event.getY() / mv.getYScale());
-                        mv.setOriginPoint(new PointF(event.getX() / mv.getXScale(), event.getY() / mv.getYScale()));
-                    } else if (mv.setDestination == true) {
-                        mv.setDestination = false;
-                        //PointF destination = new PointF(event.getX()/mv.getXScale(), event.getY()/mv.getYScale());
-                        mv.setDestinationPoint(event.getX() / mv.getXScale(), event.getY() / mv.getYScale());
-                        directionsTextView.setText("Directions: Tap on Plan Route button.");
-                        // mv.map.calculateIntersections(mv.getUserPoint(), mv.getDestinationPoint());
+                    if(!pathFinder.givingDirections) {
+                        // Set either the users point or the destination, depending on what was changed last
+                        if (mv.setDestination == false) {
+                            mv.setDestination = true;
+                            mv.setUserPoint(event.getX() / mv.getXScale(), event.getY() / mv.getYScale());
+                            mv.setOriginPoint(new PointF(event.getX() / mv.getXScale(), event.getY() / mv.getYScale()));
+                        } else if (mv.setDestination == true) {
+                            mv.setDestination = false;
+                            //PointF destination = new PointF(event.getX()/mv.getXScale(), event.getY()/mv.getYScale());
+                            mv.setDestinationPoint(event.getX() / mv.getXScale(), event.getY() / mv.getYScale());
+                            directionsTextView.setText("Directions: Press GO to start.");
+                            // mv.map.calculateIntersections(mv.getUserPoint(), mv.getDestinationPoint());
+                        }
+                        coordinates.setText("Touch coordinates : " +
+                                //mv.ma
+                                String.valueOf(mv.getUserPoint()));
                     }
-                    coordinates.setText("Touch coordinates : " +
-                            //mv.ma
-                            String.valueOf(mv.getUserPoint()));
                 }
                 return true;
             }

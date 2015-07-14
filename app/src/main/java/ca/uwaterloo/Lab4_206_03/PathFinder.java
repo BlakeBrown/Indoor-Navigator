@@ -18,6 +18,7 @@ public class PathFinder {
     public MapView mv;
     public List<PointF> directionPoints = new ArrayList<PointF>();
     public boolean angleToTurnCalculated = false;
+    public boolean givingDirections = false;
     private StepCounter stepCounter;
     TextView testView;
 

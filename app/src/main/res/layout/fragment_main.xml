@@ -20,12 +20,6 @@
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Plan Route"
-            android:id="@+id/path_finder_button"
-            android:layout_gravity="center_horizontal" />
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
             android:text="Reset"
             android:id="@+id/reset_button"
             android:layout_gravity="center_horizontal" />
@@ -48,6 +42,7 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:hint="Step Magnitude"
+            android:text="0.8"
             android:inputType="numberDecimal" />
         <Button
             android:layout_width="wrap_content"
