@@ -163,6 +163,10 @@ public class StepCounter implements SensorEventListener {
                             if(mv.map.calculateIntersections(currentPoint, newPoint).isEmpty()) {
                                 mv.setUserPoint(newPoint);
                             }
+                            if(pathFinder.directionPoints.size() == 2) {
+                                pathFinder.calculateShortestPath(newPoint);
+                                pathFinder.angleToTurnCalculated = false;
+                            }
                         }
                         lastStepTimestamp = currentTimestamp;
                         magnitudeOfStep = currentMagnitude;
